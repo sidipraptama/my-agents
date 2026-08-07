@@ -1,0 +1,32 @@
+# env files (root .env.example stays tracked as the template)
+.env
+.env.local
+frontend/.env*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# editors
+.vscode/
+.idea/
+
+# backend (Go)
+backend/myagents
+backend/server
+backend/*.test
+backend/coverage.out
+
+# frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/coverage/
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+frontend/*.pem
