@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 
+import { AutoRememberToggle } from "@/components/auto-remember-toggle";
 import { ChatWindow } from "@/components/chat-window";
 import { DeleteAgentButton } from "@/components/delete-agent-button";
+import { MemoryList } from "@/components/memory-list";
 import { ModelBindingPicker } from "@/components/model-binding-picker";
+import { RedLineRules } from "@/components/red-line-rules";
 import { ScheduleList } from "@/components/schedule-list";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -18,12 +21,14 @@ export default async function AgentDetailPage({
 }) {
   const { id } = await params;
 
-  const [agent, tasks, bindings, schedules, webhooks] = await Promise.all([
+  const [agent, tasks, bindings, schedules, webhooks, memory, redlines] = await Promise.all([
     api.getAgent(id).catch(() => null),
     api.listTasks(id).catch(() => []),
     api.listBindings().catch(() => []),
     api.listSchedules(id).catch(() => []),
     api.listWebhooks(id).catch(() => []),
+    api.listMemory(id).catch(() => []),
+    api.listRedLineRules(id).catch(() => []),
   ]);
 
   if (!agent) notFound();
@@ -78,6 +83,21 @@ export default async function AgentDetailPage({
             currentBindingId={agent.model_binding_id}
             bindings={bindings}
           />
+        </Card>
+
+        <Card className="mb-4 flex flex-col gap-3 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Memory</h2>
+          <MemoryList agentId={agent.id} entries={memory} />
+          <div className="border-t border-border pt-3">
+            <AutoRememberToggle agentId={agent.id} autoRemember={agent.auto_remember} />
+          </div>
+        </Card>
+
+        <Card className="mb-4 p-4">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">
+            Approval Rules
+          </h2>
+          <RedLineRules agentId={agent.id} rules={redlines} />
         </Card>
 
         <Card className="mb-4 p-4">

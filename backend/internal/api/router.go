@@ -40,6 +40,10 @@ func (a *API) Router() http.Handler {
 				r.Post("/schedules", a.createSchedule)
 				r.Get("/webhooks", a.listWebhooks)
 				r.Post("/webhooks", a.createWebhook)
+				r.Get("/memory", a.listMemory)
+				r.Post("/memory", a.createMemory)
+				r.Get("/redlines", a.listRedLineRules)
+				r.Post("/redlines", a.createRedLineRule)
 			})
 		})
 		r.Route("/bindings", func(r chi.Router) {
@@ -55,7 +59,16 @@ func (a *API) Router() http.Handler {
 			r.Delete("/", a.deleteSchedule)
 		})
 		r.Delete("/webhooks/{webhookID}", a.deleteWebhook)
+		r.Route("/memory/{memoryID}", func(r chi.Router) {
+			r.Patch("/", a.updateMemory)
+			r.Delete("/", a.deleteMemory)
+		})
+		r.Delete("/redlines/{redlineID}", a.deleteRedLineRule)
 		r.Get("/tasks", a.listAllTasks)
+		r.Route("/tasks/{taskID}", func(r chi.Router) {
+			r.Post("/approve", a.approveTask)
+			r.Post("/reject", a.rejectTask)
+		})
 		r.Post("/hooks/{token}", a.triggerWebhook)
 	})
 

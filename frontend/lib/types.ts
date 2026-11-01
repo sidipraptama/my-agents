@@ -20,6 +20,7 @@ export type Agent = {
   persona: Persona;
   model_binding_id: string | null;
   enabled: boolean;
+  auto_remember: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -30,7 +31,13 @@ export type TranscriptMessage = {
   timestamp: string;
 };
 
-export type TaskStatus = "queued" | "running" | "done" | "failed";
+export type TaskStatus =
+  | "queued"
+  | "running"
+  | "waiting_approval"
+  | "done"
+  | "rejected"
+  | "failed";
 
 export type Task = {
   id: string;
@@ -66,5 +73,23 @@ export type Webhook = {
   id: string;
   agent_id: string;
   token: string;
+  created_at: string;
+};
+
+export type MemoryEntryType = "fact" | "preference" | "summary";
+
+export type MemoryEntry = {
+  id: string;
+  agent_id: string;
+  entry_type: MemoryEntryType;
+  content: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RedLineRule = {
+  id: string;
+  agent_id: string;
+  pattern: string;
   created_at: string;
 };

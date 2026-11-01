@@ -32,10 +32,10 @@ type anthropicMessage struct {
 }
 
 type anthropicRequest struct {
-	Model     string              `json:"model"`
-	System    string              `json:"system,omitempty"`
-	Messages  []anthropicMessage  `json:"messages"`
-	MaxTokens int                 `json:"max_tokens"`
+	Model     string             `json:"model"`
+	System    string             `json:"system,omitempty"`
+	Messages  []anthropicMessage `json:"messages"`
+	MaxTokens int                `json:"max_tokens"`
 }
 
 type anthropicResponse struct {

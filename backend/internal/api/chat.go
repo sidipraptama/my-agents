@@ -53,7 +53,9 @@ func (a *API) chat(w http.ResponseWriter, r *http.Request) {
 // every handler that triggers a task run (chat, API tasks, webhooks).
 func writeRunError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, service.ErrAgentDisabled), errors.Is(err, service.ErrNoModelBinding):
+	case errors.Is(err, service.ErrAgentDisabled),
+		errors.Is(err, service.ErrNoModelBinding),
+		errors.Is(err, service.ErrTaskNotWaitingApproval):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusBadGateway, err.Error())

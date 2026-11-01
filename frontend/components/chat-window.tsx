@@ -40,11 +40,14 @@ export function ChatWindow({
   const [tasks, setTasks] = useState(initialTasks);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState<Pending>(null);
+  const [resolving, setResolving] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const messages = flatten(tasks);
   const isSending = pending?.status === "sending";
+  const lastTask = tasks[tasks.length - 1];
+  const waitingApproval = lastTask?.status === "waiting_approval" ? lastTask : null;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -65,7 +68,7 @@ export function ChatWindow({
 
   function handleSend() {
     const trimmed = message.trim();
-    if (!trimmed || isSending) return;
+    if (!trimmed || isSending || waitingApproval) return;
     setMessage("");
     submit(trimmed);
   }
@@ -73,6 +76,23 @@ export function ChatWindow({
   function handleRetry() {
     if (!pending) return;
     submit(pending.content);
+  }
+
+  async function resolveApproval(action: "approve" | "reject") {
+    if (!waitingApproval) return;
+    setResolving(action);
+    setError(null);
+    try {
+      const { task } =
+        action === "approve"
+          ? await api.approveTask(waitingApproval.id)
+          : await api.rejectTask(waitingApproval.id);
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to ${action} task`);
+    } finally {
+      setResolving(null);
+    }
   }
 
   return (
@@ -124,6 +144,28 @@ export function ChatWindow({
           </div>
         )}
 
+        {waitingApproval && (
+          <div className="flex justify-start">
+            <div className="flex flex-col gap-2 rounded-2xl rounded-bl-sm bg-surface-hover px-4 py-3">
+              <p className="text-xs font-medium text-foreground">
+                This message matched a red-line rule — approve it to run, or reject it.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => resolveApproval("reject")}
+                  disabled={resolving !== null}
+                >
+                  {resolving === "reject" ? "Rejecting…" : "Reject"}
+                </Button>
+                <Button onClick={() => resolveApproval("approve")} disabled={resolving !== null}>
+                  {resolving === "approve" ? "Approving…" : "Approve"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isSending && <ThinkingBubble />}
         <div ref={bottomRef} />
       </div>
@@ -136,11 +178,14 @@ export function ChatWindow({
             Settings before chatting.
           </p>
         )}
+        {waitingApproval && (
+          <p className="mb-2 text-sm text-muted">Resolve the pending approval above to continue.</p>
+        )}
         <div className="flex items-end gap-3">
           <Textarea
             rows={1}
             value={message}
-            disabled={!hasModel}
+            disabled={!hasModel || !!waitingApproval}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -153,7 +198,7 @@ export function ChatWindow({
           />
           <Button
             onClick={handleSend}
-            disabled={!hasModel || isSending || !message.trim()}
+            disabled={!hasModel || isSending || !message.trim() || !!waitingApproval}
             aria-label="Send"
           >
             <Send size={16} />

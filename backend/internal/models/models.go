@@ -26,6 +26,7 @@ type Agent struct {
 	Persona        Persona   `json:"persona"`
 	ModelBindingID *string   `json:"model_binding_id"`
 	Enabled        bool      `json:"enabled"`
+	AutoRemember   bool      `json:"auto_remember"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
@@ -33,10 +34,12 @@ type Agent struct {
 type TaskStatus string
 
 const (
-	TaskQueued  TaskStatus = "queued"
-	TaskRunning TaskStatus = "running"
-	TaskDone    TaskStatus = "done"
-	TaskFailed  TaskStatus = "failed"
+	TaskQueued          TaskStatus = "queued"
+	TaskRunning         TaskStatus = "running"
+	TaskWaitingApproval TaskStatus = "waiting_approval"
+	TaskDone            TaskStatus = "done"
+	TaskRejected        TaskStatus = "rejected"
+	TaskFailed          TaskStatus = "failed"
 )
 
 type TranscriptMessage struct {
@@ -78,4 +81,25 @@ type Webhook struct {
 	AgentID   string    `json:"agent_id"`
 	Token     string    `json:"token"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+// RedLineRule pauses a task for human approval whenever its input contains
+// Pattern (case-insensitive substring match).
+type RedLineRule struct {
+	ID        string    `json:"id"`
+	AgentID   string    `json:"agent_id"`
+	Pattern   string    `json:"pattern"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// MemoryEntry is a durable fact/preference/summary an Agent carries across
+// tasks. EntryType is "fact", "preference", or "summary" (the last reserved
+// for entries an Agent captures automatically about itself, when enabled).
+type MemoryEntry struct {
+	ID        string    `json:"id"`
+	AgentID   string    `json:"agent_id"`
+	EntryType string    `json:"entry_type"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

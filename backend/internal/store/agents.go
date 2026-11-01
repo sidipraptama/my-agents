@@ -34,9 +34,9 @@ func (s *Store) CreateAgent(ctx context.Context, w models.Agent) (models.Agent, 
 
 	now := time.Now()
 	_, err = s.db.ExecContext(ctx, `
-		INSERT INTO agents (id, name, role, persona, model_binding_id, enabled, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, id, w.Name, w.Role, personaJSON, w.ModelBindingID, w.Enabled, now, now)
+		INSERT INTO agents (id, name, role, persona, model_binding_id, enabled, auto_remember, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	`, id, w.Name, w.Role, personaJSON, w.ModelBindingID, w.Enabled, w.AutoRemember, now, now)
 	if err != nil {
 		return models.Agent{}, fmt.Errorf("insert agent: %w", err)
 	}
@@ -49,7 +49,7 @@ func (s *Store) CreateAgent(ctx context.Context, w models.Agent) (models.Agent, 
 
 func (s *Store) ListAgents(ctx context.Context) ([]models.Agent, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, name, role, persona, model_binding_id, enabled, created_at, updated_at
+		SELECT id, name, role, persona, model_binding_id, enabled, auto_remember, created_at, updated_at
 		FROM agents ORDER BY created_at DESC
 	`)
 	if err != nil {
@@ -70,7 +70,7 @@ func (s *Store) ListAgents(ctx context.Context) ([]models.Agent, error) {
 
 func (s *Store) GetAgent(ctx context.Context, id string) (models.Agent, error) {
 	row := s.db.QueryRowContext(ctx, `
-		SELECT id, name, role, persona, model_binding_id, enabled, created_at, updated_at
+		SELECT id, name, role, persona, model_binding_id, enabled, auto_remember, created_at, updated_at
 		FROM agents WHERE id = $1
 	`, id)
 	w, err := scanAgent(row)
@@ -89,9 +89,9 @@ func (s *Store) UpdateAgent(ctx context.Context, w models.Agent) (models.Agent, 
 	now := time.Now()
 
 	res, err := s.db.ExecContext(ctx, `
-		UPDATE agents SET name = $1, role = $2, persona = $3, model_binding_id = $4, enabled = $5, updated_at = $6
-		WHERE id = $7
-	`, w.Name, w.Role, personaJSON, w.ModelBindingID, w.Enabled, now, w.ID)
+		UPDATE agents SET name = $1, role = $2, persona = $3, model_binding_id = $4, enabled = $5, auto_remember = $6, updated_at = $7
+		WHERE id = $8
+	`, w.Name, w.Role, personaJSON, w.ModelBindingID, w.Enabled, w.AutoRemember, now, w.ID)
 	if err != nil {
 		return models.Agent{}, fmt.Errorf("update agent: %w", err)
 	}
@@ -120,7 +120,7 @@ type rowScanner interface {
 func scanAgent(row rowScanner) (models.Agent, error) {
 	var w models.Agent
 	var personaJSON []byte
-	if err := row.Scan(&w.ID, &w.Name, &w.Role, &personaJSON, &w.ModelBindingID, &w.Enabled, &w.CreatedAt, &w.UpdatedAt); err != nil {
+	if err := row.Scan(&w.ID, &w.Name, &w.Role, &personaJSON, &w.ModelBindingID, &w.Enabled, &w.AutoRemember, &w.CreatedAt, &w.UpdatedAt); err != nil {
 		return models.Agent{}, err
 	}
 	if err := json.Unmarshal(personaJSON, &w.Persona); err != nil {

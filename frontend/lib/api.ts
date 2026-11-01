@@ -1,4 +1,14 @@
-import type { ModelBinding, Schedule, Task, TaskWithAgent, Agent, Webhook } from "./types";
+import type {
+  Agent,
+  MemoryEntry,
+  MemoryEntryType,
+  ModelBinding,
+  RedLineRule,
+  Schedule,
+  Task,
+  TaskWithAgent,
+  Webhook,
+} from "./types";
 
 // Server Components run inside the frontend container and must reach the
 // backend via the Docker network (INTERNAL_API_URL, read at runtime). The
@@ -63,6 +73,29 @@ export const api = {
   deleteWebhook: (id: string) => request<void>(`/api/webhooks/${id}`, { method: "DELETE" }),
 
   listAllTasks: () => request<TaskWithAgent[]>("/api/tasks"),
+
+  listMemory: (agentId: string) => request<MemoryEntry[]>(`/api/agents/${agentId}/memory`),
+  createMemory: (agentId: string, input: { entry_type: MemoryEntryType; content: string }) =>
+    request<MemoryEntry>(`/api/agents/${agentId}/memory`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  updateMemory: (id: string, input: { entry_type: MemoryEntryType; content: string }) =>
+    request<MemoryEntry>(`/api/memory/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+  deleteMemory: (id: string) => request<void>(`/api/memory/${id}`, { method: "DELETE" }),
+
+  listRedLineRules: (agentId: string) => request<RedLineRule[]>(`/api/agents/${agentId}/redlines`),
+  createRedLineRule: (agentId: string, pattern: string) =>
+    request<RedLineRule>(`/api/agents/${agentId}/redlines`, {
+      method: "POST",
+      body: JSON.stringify({ pattern }),
+    }),
+  deleteRedLineRule: (id: string) => request<void>(`/api/redlines/${id}`, { method: "DELETE" }),
+
+  approveTask: (taskId: string) =>
+    request<{ task: Task }>(`/api/tasks/${taskId}/approve`, { method: "POST" }),
+  rejectTask: (taskId: string) =>
+    request<{ task: Task }>(`/api/tasks/${taskId}/reject`, { method: "POST" }),
 };
 
 type BindingInput = {
